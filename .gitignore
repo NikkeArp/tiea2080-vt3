@@ -1,5 +1,4 @@
-/venv
-/.vscode
-/logs
-/app.pyc
-/mylogging.pyc
+venv
+.vscode
+logs
+*.pyc
