@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="{% block lang %}en{% endblock lang %}">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  {% block scripts %}
+  {{ <!-- Scripts --> }}
+  {% endblock scripts %}
+  {% block styles %}
+  <!-- Styles -->
+  {{ {{ url_for('satic', filename='style.css') }} }}
+  {% endblock styles %}
+  <title>{% block title %}Sivu {% endblock title %}- VT3</title>
+</head>
+
+<body>
+  {% block nav %}
+  <!-- Navigaion -->
+  {% endblock nav %}
+  {% block content %}
+  <!-- Content -->
+  {% endblock content %}
+  {% block footer %}
+  <!-- Footer -->
+  {% endblock footer %}
+</body>
+
+</html>
