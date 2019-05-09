@@ -5,7 +5,6 @@ from flask import Flask
 from flask_debugtoolbar import DebugToolbarExtension
 
 toolbar = DebugToolbarExtension()
-logger = None
 
 def create_app(config=None):
     app = Flask(__name__)
@@ -19,9 +18,14 @@ def create_app(config=None):
     if config:
         app.config.from_mapping(config)
     
+
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
 
-    toolbar.init_app(app)    
+    with app.app_context():
+        from . import user
+        app.register_blueprint(user.user)
+
+    toolbar.init_app(app)
 
     return app
