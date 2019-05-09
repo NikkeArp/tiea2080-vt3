@@ -1,4 +1,15 @@
 {% extends 'base.html' %}
+{% import 'macros.html' as macro %}
+{% block title %}Kirjaudu Sisään{% endblock title %}
 {% block content %}
-<h1>LOGIN</h1>
+<form id ="login" class="login" method="POST">
+<div class="form-header"><h3>Kirjaudu Sisään</h3></div>
+<div class="form-fields">
+  {{ form.csrf_token }}
+  {{ macro.with_errors(form.username) }}
+  {{ macro.with_errors(form.password) }}
+  {{ macro.with_errors(form.race) }}
+  <div><input type="submit" value="Kirjaudu"></div> 
+</div>
+</form>
 {% endblock content %}

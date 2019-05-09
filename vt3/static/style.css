@@ -2,11 +2,12 @@
 body {
     font-family: monospace;
 }
-
 div.content {
     display: flex;
 }
 
+
+/** FLASHING MESSAGES **/
 ul.flashes {
     list-style: none;
     padding: 10px;
@@ -19,3 +20,36 @@ ul.flashes > li {
 }
 li.success { color: #61d135; background: #61d13541 }
 li.error { color: #ac3128; background: #ac31283a }
+
+
+/** FORMS **/
+div.form-header > h3 { margin-bottom: 0px; }
+ul.errors {
+    list-style: none;
+    margin: 0px;
+    padding-left: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+
+/** LOGIN FORM **/
+form.login {
+    display: flex;
+    flex-direction: column;
+}
+form.login > div {
+    margin: 10px;
+}
+form.login > div > div {
+    display: flex;
+    margin-top: 5px;
+}
+div.form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+
+
