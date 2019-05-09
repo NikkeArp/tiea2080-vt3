@@ -12,8 +12,11 @@ def log_exception(logger):
         filename = f.f_code.co_filename
         linecache.checkcache(filename)
         line = linecache.getline(filename, line_num, f.f_globals)
-        logger.info('''Exception occured in ( {0},
+        message = '''Exception occured in ( {0},
                             line {1}, "{2}" )
-                                {3}'''.format(filename, line_num, line.strip(), exc_obj))
+                                {3}'''.format(filename, line_num, line.strip(), exc_obj)
+        logger.debug(message)
+        return message
+        
     finally:
         del tb; del exc_obj
