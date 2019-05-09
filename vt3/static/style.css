@@ -1,1 +1,21 @@
 /* STYLE */
+body {
+    font-family: monospace;
+}
+
+div.content {
+    display: flex;
+}
+
+ul.flashes {
+    list-style: none;
+    padding: 10px;
+    display: flex
+}
+ul.flashes > li {
+    padding: 10px 25px 10px 25px;
+    margin: 5px;
+    border-radius: 5px;
+}
+li.success { color: #61d135; background: #61d13541 }
+li.error { color: #ac3128; background: #ac31283a }
