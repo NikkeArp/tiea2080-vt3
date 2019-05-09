@@ -22,15 +22,16 @@ log_messages = []
 def log_in_view(message, logger=log):
     log_messages.append((message, logger))
 
+
 ##        Load race-data from data.json         ##
 
 try:
-    with open(current_app.config['JSONPATH'], 'r') as file:
+    with open(current_app.config['JSONPdATH'], 'r') as file:
         data = json.load(file)
         log_in_view('JSON-data successfuly loaded')
 except:
     data = None
-    log_exception(log)
+    log_in_view(log_exception(log))
     log_in_view('JSON-data didnt load!')
 
 
@@ -57,17 +58,21 @@ def json_loaded(func):
     def decorated(*args, **kwargs):
         if not data:
             flash('JSON-tiedostoa ei voitu ladata', 'error')
-            return redirect(url_for('user.login'))
+            return redirect(url_for('user.json_error'))
         return func(*args, **kwargs)
     return decorated
 
 
 ##              View-functions                  ##
 
+@user.route('/json-error')
+def json_error():
+    return render_template('JSON_e.html')
+
 @user.route('/')
 @user.route('/login')
-@json_loaded
 @log_debug
+@json_loaded
 def login():
     '''Login view-function'''
 
