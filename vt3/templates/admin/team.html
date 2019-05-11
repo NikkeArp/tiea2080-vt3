@@ -1,0 +1,17 @@
+{% extends 'admin.html' %}
+
+{% block content %}
+<form method="POST" class="edit-team">
+    <div class="form-fields">
+      {{ form.csrf_token }}
+      {{ macro.with_errors(form.name) }}
+      {{ macro.with_errors(form.series) }}
+      {{ macro.with_errors(form.mem1) }}
+      {{ macro.with_errors(form.mem2) }}
+      {{ macro.with_errors(form.mem3) }}
+      {{ macro.with_errors(form.mem4) }}
+      {{ macro.with_errors(form.mem5) }}
+    <div><input type="submit" value="Tallenna"></div> 
+  </div>
+</form>
+{% endblock content %}

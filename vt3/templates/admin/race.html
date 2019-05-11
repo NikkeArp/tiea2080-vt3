@@ -1,0 +1,11 @@
+{% extends 'admin/admin.html' %}
+
+{% block content %}
+{% if race_data %}
+  <ul>
+    {% for s in race_data['series'] %}
+      <li><a href="{{ url_for('admin.series', race_name=race_data['name'], series_name=s) }}">{{ s }}</a></li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock content %}

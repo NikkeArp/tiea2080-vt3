@@ -3,7 +3,9 @@
 
 ## My python modules
 from mylogging import log_exception
-from my_wtforms.user import LoginForm, EditTeamForm
+from flask_tools import (load_json, save_json,
+    auth, json_loaded)
+from my_wtforms.user import LoginForm, ModTeamForm
 
 ## Basic python modules
 from functools import wraps
@@ -11,80 +13,18 @@ from functools import wraps
 ## Flask modules
 from flask import Blueprint, flash, redirect, render_template, url_for
 from flask.globals import current_app, g, request, session
-import flask.json as json
 
 user = Blueprint('user', __name__)
-log = current_app.logger
-
-log_messages = []
-def log_in_view(message, logger=log):
-    log_messages.append((message, logger))
-
-##        Load race-data from data.json         ##
+logging = current_app.logger
 
 @user.before_request
 def before_request():
-    try:
-        with open(current_app.config['JSONPATH'], 'r') as file:
-            g.data = json.load(file)
-    except:
-        g.data = None
-        log_in_view(log_exception(log))
-        log_in_view('JSON-data didnt load!')
-        
-
-def save_json():
-    try:
-        with open(current_app.config['JSONPATH'], 'w') as file:
-            json.dump(g.data, file)
-    except:
-        log_in_view(log_exception(log))
-        log_in_view('JSON didnt get saved!')
-
-##    Decorator-functions for view-functions    ##
-
-def log_debug(func):
-    '''Decorator function to log messages in view-function.
-       This way, debug-toolbar can show logged messages outside
-       of view-functions.'''
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        for x in log_messages:
-            x[1].debug(x[0])
-        return func(*args, **kwargs)
-    return decorated
-def authorized(func):
-    '''Decorator function to make sure user is logged in
-       before accessing content-pages. If not authorized,
-       redirects user to login-page.'''
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        if not session.get('logged_in'):
-            return redirect(url_for('user.login'))
-        return func(*args, **kwargs)
-    return decorated
-def json_loaded(func):
-    '''Decorator-function to ensure that JSON-data is
-       loaded before executing view-function.
-       Redirects user to JSON-error page.'''
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        if not getattr(g, 'data', None):
-            flash('JSON-tiedostoa ei voitu ladata', 'error')
-            return redirect(url_for('user.json_error'))
-        return func(*args, **kwargs)
-    return decorated
+    g.data = load_json(current_app.config['JSONPATH'])
 
 ##              View-functions                  ##
 
-@user.route('/json-error')
-def json_error():
-    '''JSON-error page to inform user about JSON-error.'''
-    return render_template('JSON_e.html')
-
 @user.route('/', methods=['GET', 'POST'])
 @user.route('/login', methods=['GET', 'POST'])
-##@log_debug
 @json_loaded
 def login():
     '''Login view-function'''
@@ -111,8 +51,7 @@ def login():
         form=form)
 
 @user.route('/logout')
-@authorized
-##@log_debug
+@auth
 def logout():
     '''Logout view-function. Clears session variables but
        sets logged_in to False. Redirects user to login-page.'''
@@ -120,12 +59,9 @@ def logout():
     session['logged_in'] = False
     return redirect(url_for('user.login'))
 
-
 @user.route('/teams')
-@authorized
-@log_debug
+@auth
 @json_loaded
-##@log_debug
 def teams():
     '''Teams view-function for selected race.
        Displays all teams and members.'''
@@ -134,24 +70,31 @@ def teams():
         race = r if r['nimi'] == session['race'] else None
         if race: break
     
+    ## Sort series and teams
     race['sarjat'] = sorted(race['sarjat'], key=lambda x: x['nimi'])
+    for series in race['sarjat']:
+        series['joukkueet'].sort(key=lambda x: x['nimi'])
+        for team in series['joukkueet']:
+            team['jasenet'] = sorted(team['jasenet'])
+
     return render_template('user/teams.html',
         race=race)
 
-
 @user.route('/team', methods=['GET', 'POST'])
-@authorized
+@auth
 @json_loaded
 def team():
+    '''Edit team view-function. Creates team editing form for user.'''
 
-    form = EditTeamForm()
+    form = ModTeamForm()
+    g.race = session['race']
     form.init_series(session['race'])
 
     if form.validate_on_submit():
-
         team = None
         series_modified = True if session['user']['series'] != form.series.data else False    
 
+        ## Find team object from json-data.
         for race in g.data:
             if race['nimi'] == session['race']:
                 for series in race['sarjat']:
@@ -159,8 +102,10 @@ def team():
                         for i, t in enumerate(series['joukkueet']):
                             if t['id'] == session['user']['id']:
                                 team = t
+                                ## Delete team from old series
                                 if series_modified:
                                     del series['joukkueet'][i]
+                                ## Modify team in place
                                 else:
                                     t['nimi'] = form.name.data
                                     t['jasenet'] = filter(lambda x: x != u'', [
@@ -172,9 +117,10 @@ def team():
             form.mem1.data, form.mem2.data, form.mem3.data,
             form.mem4.data, form.mem5.data])
         
+        ## Make changes to team and store it in new series.
+        ## Update session var for series.                  
         if series_modified:
             session['user']['series'] = form.series.data
-            
             team['nimi'] = form.name.data
             team['jasenet'] = filter(lambda x: x != u'', [
                 form.mem1.data, form.mem2.data, form.mem3.data,
@@ -185,12 +131,22 @@ def team():
                     for series in race['sarjat']:
                         if series['nimi'] == session['user']['series']:
                             series['joukkueet'].append(team)
-                            log.debug(team)
 
+        ## Notify that mutable structure session-variables have changed.
         session.modified = True
-        save_json()
+
+        ## Save changes
+        try:
+            save_json(current_app.config['JSONPATH'], g.data)
+        except:
+            logging.debug(u'JSON didnt save')
+            flash(u'Muutoksia ei voitu tallentaa!', 'error')
+            return redirect(url_for('json_error'))
+        
+        ## Redirect user to same page.
         return redirect(url_for('user.team'))
 
+    ## Set defaults in form fields
     if not form.is_submitted():
         form.set_defaults()
 

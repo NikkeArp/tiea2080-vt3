@@ -20,13 +20,9 @@ def validate_teamname(form):
     '''Helper function to make sure user
     input teamname is unique'''
 
-    ## No changes to teamname
-    if session['user']['name'].upper() == form.name.data.upper():
-        return True
-
     ## Find possible match from other teams
     for race in g.data:
-        if race['nimi'] == session['race']:
+        if race['nimi'] == g.race:
             for series in race['sarjat']:
                 for team in series['joukkueet']:
                     if team['nimi'].upper() == form.name.data.upper():
@@ -108,15 +104,11 @@ class LoginForm(FlaskForm):
         
         
 ##                                                                ##
-##                          EditUserForm                          ##
+##                           Team Form                            ##
 ##                                                                ##
 
-
-class EditTeamForm(FlaskForm):
+class TeamForm(FlaskForm):
     name = StringField(u'Nimi',
-        validators=[validators.InputRequired()])
-
-    series = RadioField(u'Sarja',
         validators=[validators.InputRequired()])
 
     mem1 = StringField(u'Jäsen 1')
@@ -131,7 +123,6 @@ class EditTeamForm(FlaskForm):
         if FlaskForm.validate(self):
 
             validation_results = []
-
             ##Validate team members, min 2
             members = [
                 self.mem1.data,self.mem2.data,
@@ -151,6 +142,26 @@ class EditTeamForm(FlaskForm):
         else:
             return False
 
+    def set_defaults(self):
+        '''Sets defailt values to form-fields'''
+        self.name.default = session['user']['name']
+        
+        try:
+            self.mem1.default = session['user']['members'][0]
+            self.mem2.default = session['user']['members'][1]
+            self.mem3.default = session['user']['members'][2]
+            self.mem4.default = session['user']['members'][3]
+            self.mem5.default = session['user']['members'][4]
+        except:
+            pass
+        self.process()
+
+
+
+class ModTeamForm(TeamForm):
+
+    series = RadioField(u'Sarja',
+        validators=[validators.InputRequired()])
 
     def init_series(self, race_name):
         '''Sets values to radiofield selections'''
@@ -161,12 +172,11 @@ class EditTeamForm(FlaskForm):
         if series:
             series = map(lambda x: (x['nimi'], x['nimi']), series)
             self.series.choices = sorted(series)
-            
 
     def set_defaults(self):
         '''Sets defailt values to form-fields'''
-        self.name.default = session['user']['name']
         self.series.default = session['user']['series']
+        self.name.default = session['user']['name']
         
         try:
             self.mem1.default = session['user']['members'][0]
@@ -176,6 +186,34 @@ class EditTeamForm(FlaskForm):
             self.mem5.default = session['user']['members'][4]
         except:
             pass
-
         self.process()
+
+    def validate(self):
+
+        validation_results = []
+
+        if FlaskForm.validate(self):
+            
+            logger.debug(self.errors)
+
+            if session['user']['name'].upper() == self.name.data.upper():
+                validation_results.append(True)
+            else:
+                validation_results.append(validate_teamname(self))
+            
+            members = [
+                self.mem1.data,self.mem2.data,
+                self.mem3.data,self.mem4.data,
+                self.mem5.data
+            ]
+            if len(filter(lambda x: x != u'' and x != None, members)) >= 2:
+                validation_results.append(True)
+            else:
+                self.mem1.errors.append(u'Vähintään 2 jäsentä')
+                validation_results.append(False)
+
+            return all(validation_results)
+        else:
+            return False
+            
 
