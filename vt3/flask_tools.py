@@ -26,6 +26,12 @@ def save_json(json_path, data):
 
 ##    Decorator-functions for view-functions    ##
  
+
+def url_exists(func):
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        #TODO NEEKERIT PITÄÄ TAPPAA JA TÄÄ PASKA TOIISNDIANDSDBIABFIBUFCBABFOSD
+
 def auth(func):
     '''Decorator function to make sure user is logged in
        before accessing content-pages. If not authorized,

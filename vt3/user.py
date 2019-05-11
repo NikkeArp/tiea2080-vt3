@@ -148,6 +148,10 @@ def team():
 
     ## Set defaults in form fields
     if not form.is_submitted():
-        form.set_defaults()
+        form.set_defaults({
+            'nimi': session['user']['name'],
+            'sarja': session['user']['series'],
+            'jasenet': session['user']['members']
+        })
 
     return render_template('user/team.html', form=form)

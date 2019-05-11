@@ -173,17 +173,17 @@ class ModTeamForm(TeamForm):
             series = map(lambda x: (x['nimi'], x['nimi']), series)
             self.series.choices = sorted(series)
 
-    def set_defaults(self):
+    def set_defaults(self, team):
         '''Sets defailt values to form-fields'''
-        self.series.default = session['user']['series']
-        self.name.default = session['user']['name']
+        self.series.default = team['sarja']
+        self.name.default = team['nimi']
         
         try:
-            self.mem1.default = session['user']['members'][0]
-            self.mem2.default = session['user']['members'][1]
-            self.mem3.default = session['user']['members'][2]
-            self.mem4.default = session['user']['members'][3]
-            self.mem5.default = session['user']['members'][4]
+            self.mem1.default = team['jasenet'][0]
+            self.mem2.default = team['jasenet'][1]
+            self.mem3.default = team['jasenet'][2]
+            self.mem4.default = team['jasenet'][3]
+            self.mem5.default = team['jasenet'][4]
         except:
             pass
         self.process()
@@ -193,10 +193,7 @@ class ModTeamForm(TeamForm):
         validation_results = []
 
         if FlaskForm.validate(self):
-            
-            logger.debug(self.errors)
-
-            if session['user']['name'].upper() == self.name.data.upper():
+            if g.team['nimi'].upper() == self.name.data.upper():
                 validation_results.append(True)
             else:
                 validation_results.append(validate_teamname(self))

@@ -5,7 +5,7 @@
 from mylogging import log_exception
 from my_wtforms.admin import LoginForm
 from my_wtforms.user import TeamForm, ModTeamForm
-from flask_tools import save_json, load_json, admin_auth, json_loaded
+from flask_tools import save_json, load_json, admin_auth, json_loaded, url_exists
 
 ## Basic python modules
 from functools import wraps
@@ -101,15 +101,82 @@ def series(race_name, series_name):
                             race_name=race_name, series_name=series_name))
                     break
                 else:
-                    race_data = None
+                    series_data = None
 
     return render_template('admin/series.html',
         series_data=series_data, form=form,
         race_name=race_name, series_name=series_name)
 
 @admin.route('/<race_name>/<series_name>/<team_name>', methods=['GET', 'POST'])
+@url_exists
+@json_loaded
+@admin_auth
 def team(race_name, series_name, team_name):
 
-    form = ModTeamForm
+    team = None
+    for race in g.data:
+        if race['nimi'] == race_name:
+            for series in race['sarjat']:
+                if series['nimi'] == series_name:
+                    for t in series['joukkueet']:
+                        if t['nimi'] == team_name:
+                            team = g.team =  t
+                            team['sarja'] = series_name
+                            break
+                if team: break
+        if team: break
 
-    return render_template('admin/team.html')
+    form = ModTeamForm()
+    form.init_series(race_name)
+
+    if form.validate_on_submit():
+        team = None
+        ## Find team object from json-data.
+        for race in g.data:
+            if race['nimi'] == race_name:
+                for series in race['sarjat']:
+                    if series['nimi'] == series_name:
+                        for i, t in enumerate(series['joukkueet']):
+                            if t['nimi'] == team_name:
+                                team = t
+                                if form.series.data:
+                                ## Delete team from old series
+                                    del series['joukkueet'][i]
+                                ## Modify team in place
+                                else:
+                                    t['nimi'] = form.name.data
+                                    t['jasenet'] = filter(lambda x: x != u'', [
+                                        form.mem1.data, form.mem2.data, form.mem3.data,
+                                        form.mem4.data, form.mem5.data])
+        ## Make changes to team and store it in new series.
+        ## Update session var for series.                  
+        if form.series.data:
+            team['nimi'] = form.name.data
+            team['jasenet'] = filter(lambda x: x != u'', [
+                form.mem1.data, form.mem2.data, form.mem3.data,
+                form.mem4.data, form.mem5.data])
+
+            for race in g.data:
+                if race['nimi'] == race_name:
+                    for series in race['sarjat']:
+                        if series['nimi'] == form.series.data:
+                            series['joukkueet'].append(team)
+        ## Save changes
+        try:
+            save_json(current_app.config['JSONPATH'], g.data)
+        except:
+            flash(u'Muutoksia ei voitu tallentaa!', 'error')
+            return redirect(url_for('json_error'))
+
+        ## Redirect user to same page.
+        return redirect(url_for('admin.team',
+           race_name=race_name,
+           series_name=form.series.data,
+           team_name=form.name.data))
+
+    if not form.is_submitted():
+        form.set_defaults(team)
+
+    return render_template('admin/team.html',
+        form=form)
+

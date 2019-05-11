@@ -38,7 +38,3 @@ class LoginForm(FlaskForm):
                 self.password.errors.append(u'Väärä salasana')
                 return False
         return False
-
-##                                           ##
-##            ADMIN ADD TEAM FORM            ##
-##                                           ##

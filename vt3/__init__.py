@@ -15,6 +15,7 @@ def create_app(config=None):
             'LOGPATH': 'logs/server.log',
             'ENV': 'developement',
             'JSONPATH': 'data/data.json',
+            'DEBUG_TB_INTERCEPT_REDIRECTS': False,
             'DEBUG': True
         })
     if config:
