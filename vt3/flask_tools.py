@@ -30,7 +30,7 @@ def save_json(json_path, data):
 def url_exists(func):
     @wraps(func)
     def decorated(*args, **kwargs):
-        #TODO NEEKERIT PITÄÄ TAPPAA JA TÄÄ PASKA TOIISNDIANDSDBIABFIBUFCBABFOSD
+        #TODO    JA TÄÄ PASKA TOIISNDIANDSDBIABFIBUFCBABFOSD
 
 def auth(func):
     '''Decorator function to make sure user is logged in
