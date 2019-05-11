@@ -1,41 +1,37 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="{% block lang %}fi{% endblock lang %}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    {% block scripts %}
+    <!-- Scripts -->
+    {% endblock scripts %} {% block styles %}
+    <!-- Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+    {% endblock styles %}
+    <title>{% block title %}Sivu {% endblock title %}- VT3</title>
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  {% block scripts %}
-  <!-- Scripts -->
-  {% endblock scripts %}
-  {% block styles %}
-  <!-- Styles -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  {% endblock styles %}
-  <title>{% block title %}Sivu {% endblock title %}- VT3</title>
-</head>
-
-<body>
-  {% block nav %}
-  <!-- Navigaion -->
-  {% endblock nav %}
-  {% with messages = get_flashed_messages(with_categories=True) %}
-  {% if messages %}
-  <ul class="flashes">
-    {% for category, message in messages %}
-    <li class="{{ category }}">{{ message }}</li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-  {% endwith %}
-  <div class="content">
-    {% block content %}
-    <!-- Content -->
-    {% endblock content %}
-  </div>
-  {% block footer %}
-  <!-- Footer -->
-  {% endblock footer %}
-</body>
-
+  <body>
+    {% block nav %}
+    <!-- Navigaion -->
+    {% endblock nav %} 
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    <ul class="flashes">
+      {% for category, message in messages %}
+      <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %} {% endwith %}
+    <div class="content">
+      {% block content %}
+      <!-- Content -->
+      {% endblock content %}
+    </div>
+    {% block footer %}
+    <!-- Footer -->
+    {% endblock footer %}
+  </body>
 </html>

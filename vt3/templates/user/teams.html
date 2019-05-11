@@ -1,0 +1,22 @@
+{% extends 'user/user.html' %} {% block content %}
+<ul class="races">
+  {% for serie in race['sarjat'] %}
+  <li>
+    {{ serie['nimi'] }}
+    <ul>
+      {% for team in serie['joukkueet']: %}
+      <li>
+        {{ team['nimi'] }}
+        <ul>
+          {% for member in team['jasenet'] %}
+          <li>{{ member }}</li>
+          {% endfor %}
+        </ul>
+      </li>
+      {% endfor %}
+    </ul>
+  </li>
+  {% endfor %}
+</ul>
+
+{% endblock content %}
