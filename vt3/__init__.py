@@ -1,6 +1,5 @@
-#!venv/bin/python
-# -*- coding: utf-8 -*-
-
+#!usr/bin/python
+#-*- coding: utf-8 -*-
 from flask import Flask, render_template
 from flask_debugtoolbar import DebugToolbarExtension
 
@@ -21,7 +20,6 @@ def create_app(config=None):
     if config:
         app.config.from_mapping(config)
     
-
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
 
@@ -36,6 +34,6 @@ def create_app(config=None):
     @app.route('/json-error')
     def json_error():
         '''JSON-error page to inform user about JSON-error.'''
-        return render_template('JSON_e.html')
+        return render_template('json_e.html')
 
     return app

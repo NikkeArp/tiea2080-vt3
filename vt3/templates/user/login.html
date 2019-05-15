@@ -6,7 +6,7 @@
 <div class="form-header"><h3>Kirjaudu Sisään</h3></div>
 <div class="form-fields">
   {{ form.csrf_token }}
-  {{ macro.with_errors(form.username) }}
+  {{ macro.with_errors(form.name) }}
   {{ macro.with_errors(form.password) }}
   {{ macro.with_errors(form.race) }}
   <div><input type="submit" value="Kirjaudu"></div> 

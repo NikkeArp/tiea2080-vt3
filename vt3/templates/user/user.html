@@ -1,7 +1,7 @@
 {% extends 'base.html' %} {% block nav %}
 <nav>
-  <span class="race_name">{{ session['race'] }}</span>
-  <a href="{{ url_for('user.team') }}">{{ session['user']['name'] }}</a>
+  <span class="race_name">{{ session['race']['nimi'] }}</span>
+  <a href="{{ url_for('user.team') }}">{{ session['user']['nimi'] }}</a>
   <a href="{{ url_for('user.teams') }}">Joukkueet</a>
   <a href="{{ url_for('user.logout') }}">Kirjaudu Ulos</a>
 </nav>

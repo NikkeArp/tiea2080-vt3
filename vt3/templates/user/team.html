@@ -15,4 +15,10 @@
     <div><input type="submit" value="Tallenna"></div> 
   </div>
 </form>
+<table>
+  <tr><th>Aika</th><th>Rasti</th></tr>
+  {% for cp in team_cps %}
+  <tr><td>{{ cp['aika'] }}</td><td>{{ cp['koodi'] }}</td></tr>
+  {% endfor %}
+</table>
 {% endblock content %}

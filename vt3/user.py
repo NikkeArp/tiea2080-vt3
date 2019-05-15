@@ -1,157 +1,140 @@
 #!venv/bin/python
 #-*- coding: utf-8 -*-
 
-## My python modules
-from mylogging import log_exception
-from flask_tools import (load_json, save_json,
-    auth, json_loaded)
-from my_wtforms.user import LoginForm, ModTeamForm
-
-## Basic python modules
 from functools import wraps
+from mylogging import log_exception
+from flasktools import json_loaded, auth, save_json
 
-## Flask modules
-from flask import Blueprint, flash, redirect, render_template, url_for
-from flask.globals import current_app, g, request, session
+from flask import g, session, redirect, url_for, current_app, Blueprint, flash, render_template
+from forms import LoginForm, UserTeamForm
 
 user = Blueprint('user', __name__)
 logging = current_app.logger
 
-@user.before_request
-def before_request():
-    g.data = load_json(current_app.config['JSONPATH'])
-
-##              View-functions                  ##
 
 @user.route('/', methods=['GET', 'POST'])
 @user.route('/login', methods=['GET', 'POST'])
 @json_loaded
 def login():
-    '''Login view-function'''
-
-    ## Initialize login-form and set choices dynamically.
+    '''View with simple login-form.'''
     form = LoginForm()
-    form.set_choices()
-
+    form.init_form(g.data)
     if form.validate_on_submit():
-        session['user'] = {
-            'name': g.team['nimi'], #? Actual teamname from validation (not user input).
-            'series': g.series, #? Series from validation
-            'members': sorted(g.team['jasenet']), #? Team members from validation
-            'id': g.team['id']
-        } 
-        session['race'] = form.race.data  #? Race name from form.
-        session['logged_in'] = True
-
-        ## Redirect user to their races teams-page
+        session['user_logged'] = True
+        session['race'] = g.race
+        session['user'] = g.team
         return redirect(url_for('user.teams'))
-
-    ## Render login-page
-    return render_template('user/login.html',
-        form=form)
+    return render_template('user/login.html', form=form)
 
 @user.route('/logout')
 @auth
 def logout():
-    '''Logout view-function. Clears session variables but
-       sets logged_in to False. Redirects user to login-page.'''
     session.clear()
-    session['logged_in'] = False
     return redirect(url_for('user.login'))
+
 
 @user.route('/teams')
 @auth
 @json_loaded
 def teams():
     '''Teams view-function for selected race.
-       Displays all teams and members.'''
+    Displays all teams and members.
+    '''
 
+    ## Find race from data
     for r in g.data:
-        race = r if r['nimi'] == session['race'] else None
+        race = r if r['nimi'] == session['race']['nimi'] else None
         if race: break
     
     ## Sort series and teams
-    race['sarjat'] = sorted(race['sarjat'], key=lambda x: x['nimi'])
-    for series in race['sarjat']:
-        series['joukkueet'].sort(key=lambda x: x['nimi'])
-        for team in series['joukkueet']:
-            team['jasenet'] = sorted(team['jasenet'])
+    if race.get('sarjat'):
+        race['sarjat'].sort(key=lambda x: x['nimi'])
 
+        for series in race['sarjat']:
+            series['joukkueet'].sort(key=lambda x: x['nimi'])
+            for team in series['joukkueet']:
+                team['jasenet'].sort()
+    
+    ## Render race-page
     return render_template('user/teams.html',
         race=race)
+    
 
 @user.route('/team', methods=['GET', 'POST'])
 @auth
 @json_loaded
 def team():
-    '''Edit team view-function. Creates team editing form for user.'''
-
-    form = ModTeamForm()
-    g.race = session['race']
-    form.init_series(session['race'])
-
+    '''View function for users team modification page.
+    Renders form where user can make changes for teamname, series
+    and team members. If inputs are valid saves changes to data.json
+    and returns user back to team-listing page. Otherwise informs user
+    what caused validation errors.'''
+    form = UserTeamForm()
+    form.init_form(g.data)
     if form.validate_on_submit():
+
+        ## Series has changed.
+        ## This flag will guide the flow in this function.
+        s_changed = form.series.data != session['user']['sarja']
         team = None
-        series_modified = True if session['user']['series'] != form.series.data else False    
 
-        ## Find team object from json-data.
-        for race in g.data:
-            if race['nimi'] == session['race']:
-                for series in race['sarjat']:
-                    if series['nimi'] == session['user']['series']:
-                        for i, t in enumerate(series['joukkueet']):
-                            if t['id'] == session['user']['id']:
-                                team = t
-                                ## Delete team from old series
-                                if series_modified:
-                                    del series['joukkueet'][i]
-                                ## Modify team in place
-                                else:
-                                    t['nimi'] = form.name.data
-                                    t['jasenet'] = filter(lambda x: x != u'', [
-                                        form.mem1.data, form.mem2.data, form.mem3.data,
-                                        form.mem4.data, form.mem5.data])
-        
-        session['user']['name'] = form.name.data
-        session['user']['members'] = filter(lambda x: x != u'', [
-            form.mem1.data, form.mem2.data, form.mem3.data,
-            form.mem4.data, form.mem5.data])
-        
-        ## Make changes to team and store it in new series.
-        ## Update session var for series.                  
-        if series_modified:
-            session['user']['series'] = form.series.data
-            team['nimi'] = form.name.data
-            team['jasenet'] = filter(lambda x: x != u'', [
-                form.mem1.data, form.mem2.data, form.mem3.data,
-                form.mem4.data, form.mem5.data])
-
-            for race in g.data:
-                if race['nimi'] == session['race']:
-                    for series in race['sarjat']:
-                        if series['nimi'] == session['user']['series']:
-                            series['joukkueet'].append(team)
-
-        ## Notify that mutable structure session-variables have changed.
+        ## Gather and filter team members from form.
+        session['user']['jasenet'] = filter(lambda x: x != u'' and x != None,
+            [ 
+                form.mem1.data, form.mem2.data,
+                form.mem3.data, form.mem4.data, form.mem5.data,
+            ])
         session.modified = True
 
-        ## Save changes
-        try:
-            save_json(current_app.config['JSONPATH'], g.data)
-        except:
-            logging.debug(u'JSON didnt save')
-            flash(u'Muutoksia ei voitu tallentaa!', 'error')
-            return redirect(url_for('json_error'))
-        
-        ## Redirect user to same page.
-        return redirect(url_for('user.team'))
-
-    ## Set defaults in form fields
+        for race in g.data: ## Find race loacion inside json-data.
+            if race['nimi'] == session['race']['nimi']:
+                for serie in race['sarjat']:
+                    if serie['nimi'] == session['user']['sarja']:
+                        for i, t in enumerate(serie['joukkueet']):
+                            if t['nimi'] == session['user']['nimi']:
+                                ##    Team found     
+                                if s_changed:
+                                    ## Series changed 
+                                    team = t
+                                    team['nimi'] = session['user']['nimi'] = form.name.data
+                                    team['jasenet'] = session['user']['jasenet']
+                                    team['sarja'] = session['user']['sarja'] = form.series.data
+                                    ## Delete old team 
+                                    del serie['joukkueet'][i]
+                                else:
+                                    ## Update team in place 
+                                    t['nimi'] = session['user']['nimi'] = form.name.data
+                                    t['jasenet'] = session['user']['jasenet']
+                                    ## Save changes to data.json-file 
+                                    save_json(current_app.config['JSONPATH'], g.data)
+                                    ## Redirect user to teams-page 
+                                    return redirect(url_for('user.teams'))
+        if team and s_changed:
+            ## Move team to new series 
+            for race in g.data:
+                if race['nimi'] == session['race']['nimi']:
+                    for series in race['sarjat']:
+                        if series['nimi'] == session['user']['sarja']:
+                            ## Append to teams and save changes to file. 
+                            series['joukkueet'].append(team)
+                            save_json(current_app.config['JSONPATH'], g.data)
+                            ## Redired user to teams-page 
+                            return redirect(url_for('user.teams'))
+    
+    ## Form is not submitted -> set default values 
     if not form.is_submitted():
-        form.set_defaults({
-            'nimi': session['user']['name'],
-            'sarja': session['user']['series'],
-            'jasenet': session['user']['members']
-        })
+        form.set_defaults(session['user'])
 
-    return render_template('user/team.html', form=form)
+    ## Teams chekcpoints
+    for race in g.data:
+        if race['nimi'] == session['race']['nimi']:
+            tupa = race['tupa']
+            team_cps = []
+            for x in tupa:
+                if x['joukkue'] == session['user']['id']:
+                    for race_cp in race['rastit']:
+                        if race_cp['id'] == x['rasti']:
+                            x['koodi'] = race_cp['koodi']
+                            team_cps.append(x)
+    return render_template('user/team.html',
+        form=form, team_cps=team_cps)

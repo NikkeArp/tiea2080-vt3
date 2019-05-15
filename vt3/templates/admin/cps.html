@@ -1,0 +1,20 @@
+{% extends 'admin/admin.html' %}
+
+{% block content %}
+
+{% for race in race_cps %}
+<div>
+  <h3>{{ race['nimi'] }}</h3>
+  <table>
+    <tr>
+      <th>Koodi</th><th>Lon</th><th>Lat</th><th>Leimauskerrat</th>
+    </tr>
+    {% for cp in race['cps'] %}
+    <tr>
+      <td>{{ cp['data']['koodi'] }}</td><td>{{ cp['data']['lon'] }}</td><td>{{ cp['data']['lat'] }}</td><td>{{ cp['count'] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endfor %}
+{% endblock content %}

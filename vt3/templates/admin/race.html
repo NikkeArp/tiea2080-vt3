@@ -1,10 +1,10 @@
 {% extends 'admin/admin.html' %}
 
 {% block content %}
-{% if race_data %}
+{% if race %}
   <ul>
-    {% for s in race_data['series'] %}
-      <li><a href="{{ url_for('admin.series', race_name=race_data['name'], series_name=s) }}">{{ s }}</a></li>
+    {% for s in race['sarjat'] %}
+      <li><a href="{{ url_for('admin.serie')+'?kilpailu='+race['nimi']|urlencode+'&nimi='+s['nimi']|urlencode }}">{{ s['nimi'] }}</a></li>
     {% endfor %}
   </ul>
 {% endif %}

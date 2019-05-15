@@ -4,7 +4,7 @@
 import sys
 import linecache
 
-def log_exception(logger):
+def log_exception(logger=None):
     try:
         exc_obj, tb = sys.exc_info()[1:]
         f = tb.tb_frame
@@ -15,7 +15,8 @@ def log_exception(logger):
         message = '''Exception occured in ( {0},
                             line {1}, "{2}" )
                                 {3}'''.format(filename, line_num, line.strip(), exc_obj)
-        logger.debug(message)
+        if logger:
+            logger.debug(message)
         return message
         
     finally:

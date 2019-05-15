@@ -4,7 +4,7 @@
 {% if races %}
 <ul>
   {% for race in races %}
-    <li><a href="{{ url_for('admin.race', race_name=race) }}">{{ race }}</a></li>
+    <li><a href="{{ url_for('admin.race') + '?nimi=' + race['nimi']|urlencode }}">{{ race['nimi'] }}</a></li>
   {% endfor %}
 </ul>
 {% endif %}
